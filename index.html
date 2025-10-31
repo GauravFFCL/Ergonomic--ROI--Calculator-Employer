@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ergonomics ROI Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- Load Lucide icons (used as simple SVGs) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        /* Apply smooth scrolling and default font */
+        html { scroll-behavior: smooth; font-family: 'Inter', sans-serif; }
+        
+        /* Custom styles for the Print/PDF export feature */
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: #ffffff !important;
+          }
+          .print-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+          }
+          .print-full-width {
+            grid-column: 1 / -1;
+          }
+          .print-header, .print-cta, .print-disclaimer {
+            text-align: center;
+          }
+          .print-cta {
+            background: #f0f0f0;
+            padding: 1rem;
+            border-radius: 8px;
+          }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4 md:p-8">
+    <div class="max-w-6xl mx-auto" id="print-area">
+        <!-- Header -->
+        <div class="text-center mb-8 print-header">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <!-- Calculator Icon - Replaced inline script with dynamic span -->
+                <span data-lucide="calculator" class="w-12 h-12 text-blue-600"></span>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">
+                    Ergonomics ROI Calculator
+                </h1>
+            </div>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Discover how much your organization could save by investing in workplace ergonomics
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-6 mb-8 print-grid">
+            <!-- Input Section -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 print-container" id="input-section">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 no-print">
+                    <!-- Users Icon - Replaced inline script with dynamic span -->
+                    <span data-lucide="users" class="w-6 h-6 text-blue-600"></span>
+                    Your Workplace Information
+                </h2>
+                
+                <div class="space-y-5">
+                    <!-- Industry Benchmark -->
+                    <div>
+                        <label for="industry" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                            <!-- Building Icon - Replaced inline script with dynamic span -->
+                            <span data-lucide="building" class="w-4 h-4"></span>
+                            Industry Sector
+                        </label>
+                        <select id="industry" onchange="handleIndustryChange(this.value)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg bg-white">
+                            <!-- Options added by JS -->
+                        </select>
+                    </div>
+
+                    <!-- Employee and Salary Inputs -->
+                    <label-input label="Number of Employees" id="employees" type="number" value="50" min="1"></label-input>
+                    <label-input label="Average Annual Salary ($)" id="avgSalary" type="number" value="55000" min="0"></label-input>
+                    
+                    <!-- Injury Rate (Disabled when not custom) -->
+                    <div>
+                        <label for="currentInjuryRate" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Current Annual Injury Rate (%)
+                        </label>
+                        <input id="currentInjuryRate" type="number" value="5" oninput="handleInputChange(this)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg" min="0" max="100" step="0.1">
+                        <p class="text-xs text-gray-500 mt-1" id="rate-hint"></p>
+                    </div>
+
+                    <!-- Claim Cost (Disabled when not custom) -->
+                    <div>
+                        <label for="avgClaimCost" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Average WorkSafeBC Claim Cost ($)
+                        </label>
+                        <input id="avgClaimCost" type="number" value="15000" oninput="handleInputChange(this)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg" min="0">
+                        <p class="text-xs text-gray-500 mt-1" id="cost-hint"></p>
+                    </div>
+
+                    <label-input label="Lost Productivity Days per Injury" id="lostProductivityDays" type="number" value="15" min="0"></label-input>
+
+                    <!-- Investment Inputs -->
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <!-- Dollar Sign Icon - Replaced inline script with dynamic span -->
+                            <span data-lucide="dollar-sign" class="w-5 h-5 text-blue-600"></span>
+                            Investment Costs
+                        </h3>
+                        <div class="space-y-4">
+                            <label-input label="One-Time Assessment Cost ($)" id="assessmentCost" type="number" value="3000" min="0"></label-input>
+                            <div>
+                                <label for="equipmentCost" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                                    <!-- Wrench Icon - Replaced inline script with dynamic span -->
+                                    <span data-lucide="wrench" class="w-4 h-4"></span>
+                                    One-Time New Equipment Cost ($)
+                                </label>
+                                <input id="equipmentCost" type="number" value="5000" oninput="handleInputChange(this)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg" min="0">
+                            </div>
+                            <div>
+                                <label for="annualProgramCost" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                                    <!-- Calendar Icon - Replaced inline script with dynamic span -->
+                                    <span data-lucide="calendar" class="w-4 h-4"></span>
+                                    Ongoing Annual Program Cost ($)
+                                </label>
+                                <input id="annualProgramCost" type="number" value="1000" oninput="handleInputChange(this)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg" min="0">
+                                <p class="text-xs text-gray-500 mt-1">e.g., training, admin, equipment maintenance</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reduction Rate Slider -->
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <label for="injuryReductionRate" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+                            <!-- Sliders Icon - Replaced inline script with dynamic span -->
+                            <span data-lucide="sliders" class="w-4 h-4 text-green-600"></span>
+                            Projected Injury Reduction Rate
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <input id="injuryReductionRate" type="range" value="35" oninput="updateSlider(this)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="100" step="1">
+                            <span class="text-xl font-bold text-green-700 w-20 text-right" id="reduction-rate-display">35%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Industry average is 30-40%</p>
+                    </div>
+                </div>
+
+                <button onclick="calculateAndDisplayResults()" class="w-full mt-6 bg-gradient-to-r from-blue-600 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-green-700 transition-all shadow-lg hover:shadow-xl no-print">
+                    Calculate Your ROI
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-xl p-6 border-2 border-green-200 print-container" id="results-section">
+                <!-- Content will be injected here -->
+                <div class="flex flex-col items-center justify-center h-full text-center">
+                    <!-- Dollar Sign Icon (Placeholder) - Replaced inline script with dynamic span -->
+                    <span data-lucide="dollar-sign" class="w-20 h-20 text-gray-300 mb-4"></span>
+                    <p class="text-gray-500 text-lg">
+                        Enter your information and click<br />"Calculate Your ROI" to see results
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Call to Action (Initial state is hidden) -->
+        <div id="cta-section" class="hidden bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl shadow-2xl p-8 text-white text-center print-full-width print-cta">
+            <h3 class="text-3xl font-bold mb-4">Ready to Start Saving?</h3>
+            <p class="text-xl mb-6 text-blue-50 max-w-3xl mx-auto">
+                Let Prosper Health and Rehab help you achieve these results with our expert ergonomic
+                assessments powered by Fresh Frontiers Consultancy Ltd.
+            </p>
+            <div class="flex justify-center no-print">
+                <a href="mailto:info@prosperhealth.org" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition-all shadow-lg inline-block">
+                    Schedule Free Consultation
+                </a>
+            </div>
+            <div class="hidden print-show text-lg font-medium text-blue-100">
+                <p>Contact Prosper Health and Rehab at info@prosperhealth.org to schedule your free consultation.</p>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="mt-8 text-center text-sm text-gray-500 max-w-4xl mx-auto print-full-width print-disclaimer">
+            <p>
+                * This calculator provides estimates based on your inputs and industry averages. Actual results vary by organization, industry, and
+                implementation quality. Contact Prosper Health and Rehab for a customized assessment
+                powered by Fresh Frontiers Consultancy Ltd.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- Constants ---
+        const AVG_WORKING_DAYS_PER_YEAR = 260;
+        let chartInstance = null; // To hold the Chart.js instance
+
+        const BENCHMARK_DATA = {
+            office: { label: "Office & Administration", rate: 1.5, cost: 12000 },
+            healthcare: { label: "Healthcare", rate: 6.8, cost: 18000 },
+            manufacturing: { label: "Manufacturing", rate: 5.5, cost: 20000 },
+            construction: { label: "Construction", rate: 7.1, cost: 22000 },
+            transportation: { label: "Transportation & Warehousing", rate: 8.5, cost: 25000 },
+            custom: { label: "Custom / Other", rate: 5, cost: 15000 }
+        };
+
+        const defaultInputs = {
+            employees: 50, avgSalary: 55000, currentInjuryRate: 5, avgClaimCost: 15000,
+            lostProductivityDays: 15, assessmentCost: 3000, equipmentCost: 5000,
+            annualProgramCost: 1000, injuryReductionRate: 35, industry: 'custom'
+        };
+
+        // Custom element to simplify input field creation
+        class LabelInput extends HTMLElement {
+            connectedCallback() {
+                const label = this.getAttribute('label');
+                const id = this.getAttribute('id');
+                const type = this.getAttribute('type') || 'text';
+                const value = this.getAttribute('value') || '';
+                const min = this.getAttribute('min') || '';
+
+                this.innerHTML = `
+                    <div>
+                        <label for="${id}" class="block text-sm font-semibold text-gray-700 mb-2">${label}</label>
+                        <input id="${id}" type="${type}" value="${value}" oninput="handleInputChange(this)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg" min="${min}">
+                    </div>
+                `;
+            }
+        }
+        customElements.define('label-input', LabelInput);
+
+
+        // --- Icon Rendering (New safe implementation) ---
+        function renderIcons() {
+            if (typeof lucide === 'undefined' || !lucide.icons) {
+                console.error("Lucide icons library not loaded.");
+                return;
+            }
+            document.querySelectorAll('[data-lucide]').forEach(element => {
+                const iconName = element.getAttribute('data-lucide');
+                const classes = element.className;
+                
+                // Get attributes needed for toSvg, currently just class
+                const attributes = { class: classes };
+                
+                const svg = lucide.icons[iconName];
+                if (svg) {
+                    element.innerHTML = svg.toSvg(attributes);
+                    // Clear the data-lucide attribute after rendering
+                    element.removeAttribute('data-lucide');
+                } else {
+                    console.warn(`Icon not found: ${iconName}`);
+                }
+            });
+        }
+        
+        // Helper function for dynamic icon injection in generated HTML
+        function getIconSvg(name, classes) {
+            if (typeof lucide === 'undefined' || !lucide.icons[name]) return '';
+            return lucide.icons[name].toSvg({ class: classes });
+        }
+
+
+        // --- Initialization and URL Handling ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderIcons(); // Inject static icons now that lucide.js and DOM are ready
+
+            // Populate the Industry dropdown
+            const industrySelect = document.getElementById('industry');
+            for (const key in BENCHMARK_DATA) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = BENCHMARK_DATA[key].label;
+                industrySelect.appendChild(option);
+            }
+
+            // Load values from URL parameters if available
+            const params = new URLSearchParams(window.location.search);
+            let hasParams = false;
+            for (const key in defaultInputs) {
+                const value = params.get(key);
+                if (value !== null) {
+                    const inputElement = document.getElementById(key);
+                    if (inputElement) {
+                        // Handle the range slider value display
+                        if (key === 'injuryReductionRate') {
+                            document.getElementById('reduction-rate-display').textContent = `${value}%`;
+                        }
+                        inputElement.value = value;
+                        hasParams = true;
+                    }
+                }
+            }
+            if (hasParams) {
+                // Manually trigger industry update to set text hints correctly
+                const industry = document.getElementById('industry').value;
+                handleIndustryChange(industry, false); // Do not recalculate yet
+                calculateAndDisplayResults();
+            }
+        });
+
+
+        // --- Event Handlers ---
+        function getInputs() {
+            const inputs = {};
+            for (const key in defaultInputs) {
+                const element = document.getElementById(key);
+                if (element) {
+                    const value = element.value;
+                    // Coerce to number if the original default was a number
+                    inputs[key] = typeof defaultInputs[key] === 'number' ? parseFloat(value) : value;
+                }
+            }
+            return inputs;
+        }
+
+        function handleInputChange(element) {
+            // Triggered on any input change (except industry select and slider)
+            document.getElementById('results-section').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-center">
+                    ${getIconSvg('dollar-sign', 'w-20 h-20 text-gray-300 mb-4')}
+                    <p class="text-gray-500 text-lg">
+                        Enter your information and click<br />"Calculate Your ROI" to see results
+                    </p>
+                </div>
+            `;
+            document.getElementById('cta-section').classList.add('hidden');
+            document.getElementById('share-message').textContent = '';
+        }
+
+        function updateSlider(element) {
+            document.getElementById('reduction-rate-display').textContent = `${element.value}%`;
+            handleInputChange(element);
+        }
+
+        function handleIndustryChange(industry, reset = true) {
+            const industryData = BENCHMARK_DATA[industry];
+            const rateInput = document.getElementById('currentInjuryRate');
+            const costInput = document.getElementById('avgClaimCost');
+            const rateHint = document.getElementById('rate-hint');
+            const costHint = document.getElementById('cost-hint');
+
+            if (industry !== 'custom') {
+                rateInput.value = industryData.rate;
+                rateInput.disabled = true;
+                rateInput.classList.add('bg-gray-100');
+                rateHint.textContent = `Set to ${industryData.label} average. Select 'Custom' to edit.`;
+
+                costInput.value = industryData.cost;
+                costInput.disabled = true;
+                costInput.classList.add('bg-gray-100');
+                costHint.textContent = `Set to ${industryData.label} average. Select 'Custom' to edit.`;
+            } else {
+                rateInput.disabled = false;
+                rateInput.classList.remove('bg-gray-100');
+                rateHint.textContent = '';
+
+                costInput.disabled = false;
+                costInput.classList.remove('bg-gray-100');
+                costHint.textContent = '';
+            }
+            if (reset) handleInputChange(industrySelect);
+        }
+
+        // --- Core Logic ---
+        function calculateROI(inputs) {
+            // Current annual costs
+            const injuriesPerYear = (inputs.employees * inputs.currentInjuryRate) / 100;
+            const directClaimCosts = injuriesPerYear * inputs.avgClaimCost;
+            const dailyWage = inputs.avgSalary / AVG_WORKING_DAYS_PER_YEAR;
+            const indirectCosts = injuriesPerYear * inputs.lostProductivityDays * dailyWage;
+            const currentAnnualCost = directClaimCosts + indirectCosts;
+
+            // After ergonomic intervention
+            const reductionRate = inputs.injuryReductionRate / 100;
+            const newInjuryRate = inputs.currentInjuryRate * (1 - reductionRate);
+            const newInjuriesPerYear = (inputs.employees * newInjuryRate) / 100;
+            const newDirectCosts = newInjuriesPerYear * inputs.avgClaimCost;
+            const newIndirectCosts = newInjuriesPerYear * inputs.lostProductivityDays * dailyWage;
+
+            // Includes ongoing program costs
+            const newAnnualCostWithProgram = newDirectCosts + newIndirectCosts + inputs.annualProgramCost;
+
+            // Savings and ROI
+            const oneTimeInvestment = inputs.assessmentCost + inputs.equipmentCost;
+            const annualGrossSavings = currentAnnualCost - newAnnualCostWithProgram;
+
+            // Handle division by zero edge cases
+            const roi = oneTimeInvestment > 0 ? ((annualGrossSavings - oneTimeInvestment) / oneTimeInvestment) * 100 : Infinity;
+            const paybackMonths = annualGrossSavings > 0 ? (oneTimeInvestment / annualGrossSavings) * 12 : Infinity;
+            const threeYearSavings = (annualGrossSavings * 3) - oneTimeInvestment;
+
+            return {
+                currentAnnualCost: Math.round(currentAnnualCost),
+                newAnnualCost: Math.round(newAnnualCostWithProgram),
+                annualSavings: Math.round(annualGrossSavings),
+                roi: isFinite(roi) ? Math.round(roi) : 'N/A (No Investment)',
+                paybackMonths: isFinite(paybackMonths) ? paybackMonths.toFixed(1) : 'N/A (No Savings)',
+                threeYearSavings: Math.round(threeYearSavings),
+                injuriesPerYear: injuriesPerYear.toFixed(1),
+                newInjuriesPerYear: newInjuriesPerYear.toFixed(1),
+                injuriesPrevented: (injuriesPerYear - newInjuriesPerYear).toFixed(1),
+                oneTimeInvestment: Math.round(oneTimeInvestment),
+                reductionRate: inputs.injuryReductionRate
+            };
+        }
+
+        function calculateAndDisplayResults() {
+            const inputs = getInputs();
+            const results = calculateROI(inputs);
+
+            const resultHTML = `
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        ${getIconSvg('trending-up', 'w-6 h-6 text-green-600')}
+                        Your Potential Savings
+                    </h2>
+                    <!-- Key Metrics -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-green-500">
+                            <span class="text-gray-600 font-medium block text-sm">Annual Gross Savings</span>
+                            <span class="text-2xl font-bold text-green-600">
+                                $${results.annualSavings.toLocaleString()}
+                            </span>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-blue-500">
+                            <span class="text-gray-600 font-medium block text-sm">Year 1 ROI</span>
+                            <span class="text-2xl font-bold text-blue-600">
+                                ${results.roi}%
+                            </span>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-purple-500">
+                            <span class="text-gray-600 font-medium block text-sm">Payback Period</span>
+                            <span class="text-2xl font-bold text-purple-600">
+                                ${results.paybackMonths} <span class="text-base">months</span>
+                            </span>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 shadow-md border-l-4 border-orange-500">
+                            <span class="text-gray-600 font-medium block text-sm">3-Year Net Savings</span>
+                            <span class="text-2xl font-bold text-orange-600">
+                                $${results.threeYearSavings.toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="bg-white rounded-xl p-5 shadow-md mb-6">
+                        <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            ${getIconSvg('bar-chart-3', 'w-5 h-5 text-blue-500')}
+                            Annual Cost Comparison (with ${results.reductionRate}% reduction)
+                        </h3>
+                        <div style="width: 100%; height: 250px;">
+                            <canvas id="costChart"></canvas>
+                        </div>
+                        <div class="space-y-2 text-sm mt-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Current annual injury costs:</span>
+                                <span class="font-semibold text-red-600">$${results.currentAnnualCost.toLocaleString()}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Projected annual costs (incl. program):</span>
+                                <span class="font-semibold text-green-600">$${results.newAnnualCost.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Injury Reduction -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white rounded-xl p-5 shadow-md">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                ${getIconSvg('alert-circle', 'w-5 h-5 text-red-500')}
+                                Injury Impact
+                            </h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Current (yr):</span>
+                                    <span class="font-semibold text-red-600">${results.injuriesPerYear}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Projected (yr):</span>
+                                    <span class="font-semibold text-green-600">${results.newInjuriesPerYear}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="text-gray-800 font-bold">Prevented (yr):</span>
+                                    <span class="font-bold text-green-600">${results.injuriesPrevented}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Investment Summary -->
+                        <div class="bg-white rounded-xl p-5 shadow-md">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                ${getIconSvg('dollar-sign', 'w-5 h-5 text-blue-500')}
+                                Investment
+                            </h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">One-Time Cost:</span>
+                                    <span class="font-semibold text-blue-600">$${results.oneTimeInvestment.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Annual Program:</span>
+                                    <span class="font-semibold text-blue-600">$${inputs.annualProgramCost.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="text-gray-800 font-bold">Total (Year 1):</span>
+                                    <span class="font-bold text-blue-600">$${(results.oneTimeInvestment + inputs.annualProgramCost).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4 mt-6 no-print">
+                        <button onclick="handlePrint()" class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-xl font-bold text-lg hover:bg-gray-700 transition-all shadow-lg inline-flex items-center justify-center gap-2">
+                            ${getIconSvg('printer', 'w-5 h-5')}
+                            Print Report
+                        </button>
+                        <button onclick="handleShare()" class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-xl font-bold text-lg hover:bg-purple-700 transition-all shadow-lg inline-flex items-center justify-center gap-2">
+                            ${getIconSvg('share-2', 'w-5 h-5')}
+                            Share Results
+                        </button>
+                    </div>
+                    <p class="text-center text-purple-700 font-medium mt-3 no-print" id="share-message"></p>
+                </div>
+            `;
+            document.getElementById('results-section').innerHTML = resultHTML;
+            document.getElementById('cta-section').classList.remove('hidden');
+
+            // Render the chart
+            renderChart(results);
+        }
+
+        function renderChart(results) {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            
+            // Destroy previous chart instance if it exists
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Current', 'Projected (Annual)'],
+                    datasets: [{
+                        label: 'Annual Injury Costs',
+                        data: [results.currentAnnualCost, results.newAnnualCost],
+                        backgroundColor: ['#ef4444', '#10b981'], // Red and Green
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cost ($)' },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000) return '$' + (value / 1000) + 'K';
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // --- Utility Functions ---
+        function handlePrint() {
+            window.print();
+        }
+
+        function handleShare() {
+            const inputs = getInputs();
+            const params = new URLSearchParams();
+            for (const key in inputs) {
+                // Ensure only non-default values (or all required values for sharing) are included
+                const inputElement = document.getElementById(key);
+                if (inputElement && inputElement.value !== defaultInputs[key].toString()) {
+                     params.append(key, inputElement.value);
+                } else if (inputElement && key === 'industry') {
+                    // Always include industry selection
+                    params.append(key, inputElement.value);
+                }
+            }
+            
+            const link = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+            
+            // Use execCommand for broader compatibility in iFrames
+            try {
+              const dummy = document.createElement('textarea');
+              document.body.appendChild(dummy);
+              dummy.value = link;
+              dummy.select();
+              document.execCommand('copy');
+              document.body.removeChild(dummy);
+              document.getElementById('share-message').textContent = 'Link copied to clipboard!';
+            } catch (err) {
+              document.getElementById('share-message').textContent = 'Failed to copy link.';
+              console.error('Failed to copy: ', err);
+            }
+        }
+    </script>
+</body>
+</html>
