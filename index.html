@@ -55,7 +55,7 @@
         <!-- Header -->
         <div class="text-center mb-8 print-header">
             <div class="flex items-center justify-center gap-3 mb-4">
-                <!-- Calculator Icon - Replaced inline script with dynamic span -->
+                <!-- Calculator Icon -->
                 <span data-lucide="calculator" class="w-12 h-12 text-blue-600"></span>
                 <h1 class="text-4xl md:text-5xl font-bold text-gray-800">
                     Ergonomics ROI Calculator
@@ -70,7 +70,7 @@
             <!-- Input Section -->
             <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 print-container" id="input-section">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 no-print">
-                    <!-- Users Icon - Replaced inline script with dynamic span -->
+                    <!-- Users Icon -->
                     <span data-lucide="users" class="w-6 h-6 text-blue-600"></span>
                     Your Workplace Information
                 </h2>
@@ -79,17 +79,18 @@
                     <!-- Industry Benchmark -->
                     <div>
                         <label for="industry" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                            <!-- Building Icon - Replaced inline script with dynamic span -->
+                            <!-- Building Icon -->
                             <span data-lucide="building" class="w-4 h-4"></span>
                             Industry Sector
                         </label>
-                        <select id="industry" onchange="handleIndustryChange(this.value)" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg bg-white">
+                        <select id="industry" onchange="handleIndustryChange(this.value); calculateAndDisplayResults();" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-lg bg-white">
                             <!-- Options added by JS -->
                         </select>
                     </div>
 
                     <!-- Employee and Salary Inputs -->
-                    <label-input label="Number of Employees" id="employees" type="number" value="50" min="1"></label-input>
+                    <!-- Changed default employee count to 51 based on user input -->
+                    <label-input label="Number of Employees" id="employees" type="number" value="51" min="1"></label-input>
                     <label-input label="Average Annual Salary ($)" id="avgSalary" type="number" value="55000" min="0"></label-input>
                     
                     <!-- Injury Rate (Disabled when not custom) -->
@@ -115,7 +116,7 @@
                     <!-- Investment Inputs -->
                     <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-                            <!-- Dollar Sign Icon - Replaced inline script with dynamic span -->
+                            <!-- Dollar Sign Icon -->
                             <span data-lucide="dollar-sign" class="w-5 h-5 text-blue-600"></span>
                             Investment Costs
                         </h3>
@@ -123,7 +124,7 @@
                             <label-input label="One-Time Assessment Cost ($)" id="assessmentCost" type="number" value="3000" min="0"></label-input>
                             <div>
                                 <label for="equipmentCost" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                                    <!-- Wrench Icon - Replaced inline script with dynamic span -->
+                                    <!-- Wrench Icon -->
                                     <span data-lucide="wrench" class="w-4 h-4"></span>
                                     One-Time New Equipment Cost ($)
                                 </label>
@@ -131,7 +132,7 @@
                             </div>
                             <div>
                                 <label for="annualProgramCost" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                                    <!-- Calendar Icon - Replaced inline script with dynamic span -->
+                                    <!-- Calendar Icon -->
                                     <span data-lucide="calendar" class="w-4 h-4"></span>
                                     Ongoing Annual Program Cost ($)
                                 </label>
@@ -144,12 +145,12 @@
                     <!-- Reduction Rate Slider -->
                     <div class="bg-green-50 p-4 rounded-lg border border-green-200">
                         <label for="injuryReductionRate" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
-                            <!-- Sliders Icon - Replaced inline script with dynamic span -->
+                            <!-- Sliders Icon -->
                             <span data-lucide="sliders" class="w-4 h-4 text-green-600"></span>
                             Projected Injury Reduction Rate
                         </label>
                         <div class="flex items-center gap-4">
-                            <input id="injuryReductionRate" type="range" value="35" oninput="updateSlider(this)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="100" step="1">
+                            <input id="injuryReductionRate" type="range" value="35" oninput="updateSlider(this); calculateAndDisplayResults();" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" min="0" max="100" step="1">
                             <span class="text-xl font-bold text-green-700 w-20 text-right" id="reduction-rate-display">35%</span>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Industry average is 30-40%</p>
@@ -165,7 +166,7 @@
             <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-xl p-6 border-2 border-green-200 print-container" id="results-section">
                 <!-- Content will be injected here -->
                 <div class="flex flex-col items-center justify-center h-full text-center">
-                    <!-- Dollar Sign Icon (Placeholder) - Replaced inline script with dynamic span -->
+                    <!-- Dollar Sign Icon (Placeholder) -->
                     <span data-lucide="dollar-sign" class="w-20 h-20 text-gray-300 mb-4"></span>
                     <p class="text-gray-500 text-lg">
                         Enter your information and click<br />"Calculate Your ROI" to see results
@@ -206,19 +207,27 @@
         const AVG_WORKING_DAYS_PER_YEAR = 260;
         let chartInstance = null; // To hold the Chart.js instance
 
+        // Updated BENCHMARK_DATA to be more aligned with high-level WorkSafeBC industry groups
         const BENCHMARK_DATA = {
-            office: { label: "Office & Administration", rate: 1.5, cost: 12000 },
-            healthcare: { label: "Healthcare", rate: 6.8, cost: 18000 },
-            manufacturing: { label: "Manufacturing", rate: 5.5, cost: 20000 },
+            office: { label: "Office & Admin Services", rate: 1.5, cost: 12000 },
+            retail: { label: "Retail & Wholesale", rate: 2.2, cost: 10000 },
+            manufacturing: { label: "Manufacturing & Processing", rate: 5.5, cost: 20000 },
             construction: { label: "Construction", rate: 7.1, cost: 22000 },
             transportation: { label: "Transportation & Warehousing", rate: 8.5, cost: 25000 },
+            healthcare: { label: "Health & Social Services", rate: 6.8, cost: 18000 },
+            hospitality: { label: "Accommodation & Food Services", rate: 4.5, cost: 14000 },
+            recreation: { label: "Culture, Recreation, & Personal Services (Includes Arts & Ent.)", rate: 3.5, cost: 14000 }, 
+            public: { label: "Public Administration", rate: 3.5, cost: 16000 },
+            naturalresources: { label: "Natural Resources (Forestry/Mining)", rate: 9.0, cost: 30000 },
+            utilities: { label: "Utilities & Communication", rate: 4.0, cost: 17000 },
+            education: { label: "Education Services", rate: 2.5, cost: 11000 },
             custom: { label: "Custom / Other", rate: 5, cost: 15000 }
         };
 
         const defaultInputs = {
-            employees: 50, avgSalary: 55000, currentInjuryRate: 5, avgClaimCost: 15000,
+            employees: 51, avgSalary: 55000, currentInjuryRate: 5, avgClaimCost: 15000,
             lostProductivityDays: 15, assessmentCost: 3000, equipmentCost: 5000,
-            annualProgramCost: 1000, injuryReductionRate: 35, industry: 'custom'
+            annualProgramCost: 1000, injuryReductionRate: 35, industry: 'office' // Changed default industry to office
         };
 
         // Custom element to simplify input field creation
@@ -241,7 +250,7 @@
         customElements.define('label-input', LabelInput);
 
 
-        // --- Icon Rendering (New safe implementation) ---
+        // --- Icon Rendering ---
         function renderIcons() {
             if (typeof lucide === 'undefined' || !lucide.icons) {
                 console.error("Lucide icons library not loaded.");
@@ -278,12 +287,16 @@
 
             // Populate the Industry dropdown
             const industrySelect = document.getElementById('industry');
+            // Clear existing options before repopulating
+            industrySelect.innerHTML = ''; 
             for (const key in BENCHMARK_DATA) {
                 const option = document.createElement('option');
                 option.value = key;
                 option.textContent = BENCHMARK_DATA[key].label;
                 industrySelect.appendChild(option);
             }
+            // Set initial default value
+            industrySelect.value = defaultInputs.industry;
 
             // Load values from URL parameters if available
             const params = new URLSearchParams(window.location.search);
@@ -302,12 +315,23 @@
                     }
                 }
             }
-            if (hasParams) {
-                // Manually trigger industry update to set text hints correctly
-                const industry = document.getElementById('industry').value;
-                handleIndustryChange(industry, false); // Do not recalculate yet
-                calculateAndDisplayResults();
-            }
+            
+            // --- CRITICAL FIX: Ensure required inputs have values on initial load ---
+            // This is done to prevent timing issues with custom element rendering or attribute reading.
+            const requiredFields = ['employees', 'avgSalary', 'currentInjuryRate'];
+            requiredFields.forEach(key => {
+                const inputElement = document.getElementById(key);
+                // If the element exists and its current value is empty or zero (due to parsing issues), force the default.
+                if (inputElement && (!inputElement.value || parseFloat(inputElement.value) === 0)) {
+                    inputElement.value = defaultInputs[key];
+                }
+            });
+            // ------------------------------------------------------------------------
+
+            // Set initial industry state and calculate results
+            const industry = document.getElementById('industry').value;
+            handleIndustryChange(industry, false); // Update inputs based on initial industry setting
+            calculateAndDisplayResults(); 
         });
 
 
@@ -318,30 +342,33 @@
                 const element = document.getElementById(key);
                 if (element) {
                     const value = element.value;
-                    // Coerce to number if the original default was a number
-                    inputs[key] = typeof defaultInputs[key] === 'number' ? parseFloat(value) : value;
+                    // Robust parsing: If the field is empty or invalid, default to 0 to prevent NaN propagation.
+                    if (typeof defaultInputs[key] === 'number') {
+                        inputs[key] = parseFloat(value) || 0; 
+                    } else {
+                        inputs[key] = value;
+                    }
                 }
             }
             return inputs;
         }
 
         function handleInputChange(element) {
-            // Triggered on any input change (except industry select and slider)
-            document.getElementById('results-section').innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full text-center">
-                    ${getIconSvg('dollar-sign', 'w-20 h-20 text-gray-300 mb-4')}
-                    <p class="text-gray-500 text-lg">
-                        Enter your information and click<br />"Calculate Your ROI" to see results
-                    </p>
-                </div>
-            `;
-            document.getElementById('cta-section').classList.add('hidden');
-            document.getElementById('share-message').textContent = '';
+            // Check input validity (must be a non-negative number if it's a number type)
+            if (element.type === 'number') {
+                const val = parseFloat(element.value);
+                if (isNaN(val) || val < 0) {
+                    // If invalid, clear the CTA but still run calculation which will show error message
+                    document.getElementById('cta-section').classList.add('hidden');
+                }
+            }
+            // Trigger calculation immediately for a dynamic experience
+            calculateAndDisplayResults();
         }
 
         function updateSlider(element) {
             document.getElementById('reduction-rate-display').textContent = `${element.value}%`;
-            handleInputChange(element);
+            // Calculation will be triggered by oninput handler in the HTML
         }
 
         function handleIndustryChange(industry, reset = true) {
@@ -364,14 +391,33 @@
             } else {
                 rateInput.disabled = false;
                 rateInput.classList.remove('bg-gray-100');
+                rateInput.classList.remove('bg-gray-100');
                 rateHint.textContent = '';
 
                 costInput.disabled = false;
                 costInput.classList.remove('bg-gray-100');
                 costHint.textContent = '';
             }
-            if (reset) handleInputChange(industrySelect);
+             // Recalculate after changing industry to show new benchmarks immediately
+             calculateAndDisplayResults();
         }
+        
+        // Helper function for visual validation feedback
+        function applyValidationStyle(id, isValid) {
+            const inputElement = document.getElementById(id);
+            if (inputElement) {
+                if (isValid) {
+                    // Valid: Ensure default styling (border-gray-200) and remove error styles
+                    inputElement.classList.remove('border-red-500', 'border-4');
+                    inputElement.classList.add('border-gray-200', 'border-2');
+                } else {
+                    // Invalid: Apply error styles
+                    inputElement.classList.add('border-red-500', 'border-4');
+                    inputElement.classList.remove('border-gray-200', 'border-2');
+                }
+            }
+        }
+
 
         // --- Core Logic ---
         function calculateROI(inputs) {
@@ -418,6 +464,66 @@
 
         function calculateAndDisplayResults() {
             const inputs = getInputs();
+            let isValid = true;
+
+            // --- DEBUG LOGGING (still useful to check what the code receives) ---
+            console.log("--- Calculation Check ---");
+            console.log(`Employees: ${inputs.employees}`);
+            console.log(`Avg Salary: ${inputs.avgSalary}`);
+            console.log(`Injury Rate: ${inputs.currentInjuryRate}`);
+            console.log("-------------------------");
+            // --- END DEBUG LOGGING ---
+
+            // 1. Employee Count Check
+            if (inputs.employees <= 0) {
+                applyValidationStyle('employees', false);
+                isValid = false;
+            } else {
+                applyValidationStyle('employees', true);
+            }
+
+            // 2. Average Salary Check
+            if (inputs.avgSalary <= 0) {
+                applyValidationStyle('avgSalary', false);
+                isValid = false;
+            } else {
+                applyValidationStyle('avgSalary', true);
+            }
+
+            // 3. Current Injury Rate Check (Only fails if user sets to custom AND enters 0 or less)
+            if (inputs.currentInjuryRate <= 0) {
+                applyValidationStyle('currentInjuryRate', false);
+                isValid = false;
+            } else {
+                applyValidationStyle('currentInjuryRate', true);
+            }
+
+
+            // Validation check to prevent calculation with crucial zero/invalid inputs
+            if (!isValid) {
+                document.getElementById('cta-section').classList.add('hidden');
+                document.getElementById('results-section').innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-center p-8 bg-white rounded-xl shadow-inner border border-red-200">
+                        ${getIconSvg('alert-triangle', 'w-12 h-12 text-red-500 mb-4')}
+                        <p class="text-gray-700 text-xl font-semibold">
+                            Missing or Invalid Data
+                        </p>
+                        <p class="text-gray-500 mt-2">
+                            We can't calculate your ROI because one or more critical fields are zero or blank.
+                            <br>
+                            Please check the fields outlined in **thick red borders** and enter a positive number:
+                            <ul class="list-disc list-inside mt-3 text-left w-max mx-auto font-medium">
+                                <li>**Number of Employees**</li>
+                                <li>**Average Annual Salary ($)**</li>
+                                <li>**Current Annual Injury Rate (%)**</li>
+                            </ul>
+                        </p>
+                    </div>
+                `;
+                if (chartInstance) chartInstance.destroy();
+                return;
+            }
+
             const results = calculateROI(inputs);
 
             const resultHTML = `
