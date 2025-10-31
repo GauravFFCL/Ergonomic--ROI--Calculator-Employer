@@ -195,8 +195,8 @@
         <!-- Disclaimer -->
         <div class="mt-8 text-center text-sm text-gray-500 max-w-4xl mx-auto print-full-width print-disclaimer">
             <p>
-                * This calculator provides estimates based on your inputs and industry averages. Actual results vary by organization, industry, and
-                implementation quality. Contact Prosper Health and Rehab for a customized assessment
+                * This calculator provides estimates based on your inputs and **estimated industry benchmarks derived from general WorkSafeBC categories**.
+                Actual results vary by organization, specific WorkSafeBC Classification Unit, annual rate changes, and implementation quality. Contact Prosper Health and Rehab for a customized assessment
                 powered by Fresh Frontiers Consultancy Ltd.
             </p>
         </div>
@@ -207,7 +207,9 @@
         const AVG_WORKING_DAYS_PER_YEAR = 260;
         let chartInstance = null; // To hold the Chart.js instance
 
-        // Updated BENCHMARK_DATA to be more aligned with high-level WorkSafeBC industry groups
+        // The following BENCHMARK_DATA provides ESTIMATED averages based on broad WorkSafeBC industry categories.
+        // NOTE: Actual WorkSafeBC rates vary by specific Classification Unit (CU) and change annually.
+        // Users should select 'Custom / Other' and enter their precise rates for the most accurate calculation.
         const BENCHMARK_DATA = {
             office: { label: "Office & Admin Services", rate: 1.5, cost: 12000 },
             retail: { label: "Retail & Wholesale", rate: 2.2, cost: 10000 },
@@ -382,12 +384,12 @@
                 rateInput.value = industryData.rate;
                 rateInput.disabled = true;
                 rateInput.classList.add('bg-gray-100');
-                rateHint.textContent = `Set to ${industryData.label} average. Select 'Custom' to edit.`;
+                rateHint.textContent = `Set to ${industryData.label} estimated average. Select 'Custom' to edit.`;
 
                 costInput.value = industryData.cost;
                 costInput.disabled = true;
                 costInput.classList.add('bg-gray-100');
-                costHint.textContent = `Set to ${industryData.label} average. Select 'Custom' to edit.`;
+                costHint.textContent = `Set to ${industryData.label} estimated average. Select 'Custom' to edit.`;
             } else {
                 rateInput.disabled = false;
                 rateInput.classList.remove('bg-gray-100');
